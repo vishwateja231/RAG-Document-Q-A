@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document QA RAG</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 16px; }
+    h1 { margin-bottom: 6px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+    input[type="file"], input[type="text"] { width: 100%; margin: 8px 0; padding: 10px; }
+    button { background: #2f6feb; color: #fff; border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
+    button:hover { opacity: 0.92; }
+    pre { white-space: pre-wrap; background: #f7f7f7; padding: 12px; border-radius: 6px; }
+    .small { color: #555; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Document Question Answering (RAG)</h1>
+  <p class="small">Upload PDF files, then ask natural-language questions.</p>
+
+  <div class="card">
+    <h2>1) Upload Document</h2>
+    <input id="pdfFile" type="file" accept="application/pdf" />
+    <button onclick="uploadDoc()">Upload & Index</button>
+    <pre id="uploadResult"></pre>
+  </div>
+
+  <div class="card">
+    <h2>2) Ask Question</h2>
+    <input id="question" type="text" placeholder="e.g. What are the key findings in the report?" />
+    <button onclick="askQuestion()">Ask</button>
+    <pre id="answerResult"></pre>
+  </div>
+
+  <script>
+    async function uploadDoc() {
+      const fileInput = document.getElementById('pdfFile');
+      const result = document.getElementById('uploadResult');
+      if (!fileInput.files.length) {
+        result.textContent = 'Please select a PDF first.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        result.textContent = `Upload failed: ${err.message}`;
+      }
+    }
+
+    async function askQuestion() {
+      const input = document.getElementById('question');
+      const result = document.getElementById('answerResult');
+      if (!input.value.trim()) {
+        result.textContent = 'Please enter a question.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: input.value.trim() })
+        });
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        result.textContent = `Question failed: ${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
